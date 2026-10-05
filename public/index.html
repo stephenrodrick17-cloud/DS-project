@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus Store — Live Excel-Powered E-Commerce</title>
+  <meta name="description" content="A professional e-commerce store with real-time Excel database synchronization (products_database.xlsx), product details, active shopping cart, and complete checkout experience.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Live Announcement Top Bar -->
+  <aside class="announcement-bar">
+    <div class="announcement-container">
+      <div class="announcement-left">
+        <span class="live-beacon"></span>
+        <span><strong>Live Excel Database:</strong> <code>products_database.xlsx</code> &bull; Sheet: "Products"</span>
+      </div>
+      <div class="announcement-right">
+        <span>Auto-syncs every <strong>5s</strong> without restart</span>
+        <button id="top-guide-btn" class="announcement-link">How to Test</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Navigation Header -->
+  <header class="navbar">
+    <div class="nav-container">
+      <!-- Logo -->
+      <a href="#catalog" class="nav-brand" id="brand-link">
+        <div class="brand-logo-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <path d="M16 10a4 4 0 0 1-8 0"></path>
+          </svg>
+        </div>
+        <div class="brand-text-wrap">
+          <span class="brand-title">NexusStore</span>
+          <span class="brand-tagline">Excel-Driven Catalog</span>
+        </div>
+      </a>
+
+      <!-- Navigation Links -->
+      <nav class="nav-links">
+        <a href="#catalog" class="nav-link active" data-page="catalog">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          Shop Catalog
+        </a>
+        <a href="#sync-status" class="nav-link" data-page="sync-status">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+          Excel Live Monitor
+        </a>
+      </nav>
+
+      <!-- Right Header Actions -->
+      <div class="nav-actions">
+        <!-- Live Status Pill -->
+        <div class="live-pill" id="live-indicator" title="Connected to products_database.xlsx">
+          <span class="live-pulse"></span>
+          <span class="live-status-text" id="connection-status">Live</span>
+          <span class="countdown-badge" id="countdown-badge">5s</span>
+        </div>
+
+        <!-- Manual Refresh Button -->
+        <button id="refresh-btn" class="nav-btn-icon" title="Refresh from Excel file immediately">
+          <svg id="refresh-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+        </button>
+
+        <!-- Cart Button with Counter Badge -->
+        <button id="cart-toggle-btn" class="cart-btn" aria-label="View Shopping Cart">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+          </svg>
+          <span class="cart-label">Cart</span>
+          <span class="cart-badge" id="nav-cart-badge">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Toast Notification Hub -->
+  <aside id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></aside>
+
+  <!-- Error / Offline Banner -->
+  <aside id="error-banner" class="error-banner hidden" role="alert">
+    <div class="error-banner-inner">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+      <span id="error-message">Database temporarily unavailable.</span>
+      <button id="dismiss-error" class="banner-close">&times;</button>
+    </div>
+  </aside>
+
+  <!-- Main View Container -->
+  <main class="app-main">
+
+    <!-- ======================================================================
+         PAGE 1: CATALOG / SHOP HOME
+         ====================================================================== -->
+    <div id="page-catalog" class="page-view active">
+      <!-- Hero Banner -->
+      <section class="hero-banner">
+        <div class="hero-content">
+          <div class="hero-tag">
+            <span class="tag-dot"></span>
+            Real-Time Excel Database Integration
+          </div>
+          <h1 class="hero-title">Shop Quality Goods with Live Stock & Pricing</h1>
+          <p class="hero-subtitle">Every price, inventory count, and availability status is read in real time directly from <code>products_database.xlsx</code>. Try editing a cell in Excel to watch it update live!</p>
+          <div class="hero-stats">
+            <div class="hero-stat-item">
+              <span class="stat-number" id="stat-total">--</span>
+              <span class="stat-caption">Products</span>
+            </div>
+            <div class="hero-stat-sep"></div>
+            <div class="hero-stat-item">
+              <span class="stat-number text-success" id="stat-in-stock">--</span>
+              <span class="stat-caption">In Stock</span>
+            </div>
+            <div class="hero-stat-sep"></div>
+            <div class="hero-stat-item">
+              <span class="stat-number text-warning" id="stat-low-stock">--</span>
+              <span class="stat-caption">Low Stock</span>
+            </div>
+            <div class="hero-stat-sep"></div>
+            <div class="hero-stat-item">
+              <span class="stat-number text-danger" id="stat-out-stock">--</span>
+              <span class="stat-caption">Out of Stock</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Category Filter Pills -->
+      <section class="category-chips-section">
+        <div class="category-chips-wrapper" id="category-chips">
+          <button class="chip active" data-cat="all">All Products</button>
+        </div>
+      </section>
+
+      <!-- Search & Sort Controls Toolbar -->
+      <section class="toolbar">
+        <div class="search-box">
+          <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input type="text" id="search-input" placeholder="Search by product name, category, or ID..." autocomplete="off">
+          <button id="clear-search" class="clear-btn hidden" title="Clear search">&times;</button>
+        </div>
+
+        <div class="toolbar-controls">
+          <!-- Status Dropdown -->
+          <div class="control-select-wrap">
+            <label for="status-filter">Status</label>
+            <select id="status-filter">
+              <option value="all">All Statuses</option>
+              <option value="In Stock">In Stock (Green)</option>
+              <option value="Low Stock">Low Stock (Orange)</option>
+              <option value="Out of Stock">Out of Stock (Red)</option>
+            </select>
+          </div>
+
+          <!-- Sort Dropdown -->
+          <div class="control-select-wrap">
+            <label for="sort-select">Sort By</label>
+            <select id="sort-select">
+              <option value="id-asc">Featured (ID)</option>
+              <option value="price-asc">Price: Low to High</option>
+              <option value="price-desc">Price: High to Low</option>
+              <option value="rating-desc">Rating: Highest First</option>
+              <option value="stock-asc">Stock: Low to High</option>
+              <option value="stock-desc">Stock: High to Low</option>
+              <option value="name-asc">Name: A to Z</option>
+            </select>
+          </div>
+
+          <!-- Grid vs Table View Switch -->
+          <div class="view-switch-wrap">
+            <label>View</label>
+            <div class="view-toggle">
+              <button id="view-grid-btn" class="view-btn active" title="Grid Cards View">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+              </button>
+              <button id="view-table-btn" class="view-btn" title="Table View">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Active Filters Bar -->
+      <div class="results-meta">
+        <span id="results-count">Showing all products</span>
+        <button id="reset-filters-btn" class="reset-link hidden">Clear active filters</button>
+      </div>
+
+      <!-- Products Grid View -->
+      <div id="grid-view" class="cards-grid"></div>
+
+      <!-- Products Table View -->
+      <div id="table-view" class="table-wrapper hidden">
+        <table class="products-table">
+          <thead>
+            <tr>
+              <th>Image</th>
+              <th data-sort="id">ID</th>
+              <th data-sort="name">Product Name</th>
+              <th data-sort="category">Category</th>
+              <th data-sort="price">Price (INR)</th>
+              <th data-sort="stock">Stock</th>
+              <th data-sort="rating">Rating</th>
+              <th data-sort="status">Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+
+      <!-- Empty State -->
+      <div id="empty-state" class="empty-state hidden">
+        <div class="empty-icon">🔍</div>
+        <h3>No matching products found</h3>
+        <p>No products match your current search and filter criteria.</p>
+        <button id="empty-reset-btn" class="btn-primary">Reset all filters</button>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         PAGE 2: PRODUCT DETAILS PAGE (PDP)
+         ====================================================================== -->
+    <div id="page-product" class="page-view hidden">
+      <nav class="breadcrumb">
+        <a href="#catalog" class="breadcrumb-link">&larr; Back to Products</a>
+        <span class="breadcrumb-sep">/</span>
+        <span id="pdp-breadcrumb-cat" class="breadcrumb-item">Category</span>
+        <span class="breadcrumb-sep">/</span>
+        <span id="pdp-breadcrumb-name" class="breadcrumb-current">Product Name</span>
+      </nav>
+
+      <div class="pdp-container">
+        <!-- Left: Image Gallery -->
+        <div class="pdp-image-col">
+          <div class="pdp-main-image-wrap">
+            <img id="pdp-image" src="" alt="Product Image" class="pdp-main-image">
+            <div id="pdp-status-badge" class="pdp-floating-badge">In Stock</div>
+          </div>
+          <div class="pdp-perks">
+            <div class="perk-item">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+              <span>1 Year Official Warranty</span>
+            </div>
+            <div class="perk-item">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <span>Fast 3-Day Express Shipping</span>
+            </div>
+            <div class="perk-item">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+              <span>7 Days Easy Return Policy</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Product Info & Actions -->
+        <div class="pdp-details-col">
+          <div class="pdp-meta-row">
+            <span id="pdp-category" class="category-tag">Electronics</span>
+            <span id="pdp-id" class="id-tag">ID #1</span>
+          </div>
+
+          <h1 id="pdp-title" class="pdp-title">Product Name</h1>
+
+          <div class="pdp-rating-row">
+            <div class="stars-wrap" id="pdp-stars">★★★★★</div>
+            <span id="pdp-rating-num" class="rating-num">4.5</span>
+            <span class="rating-reviews-count">&bull; Verified Product</span>
+          </div>
+
+          <!-- Price Box -->
+          <div class="pdp-price-box">
+            <div class="pdp-price-main">
+              <span class="pdp-currency">₹</span>
+              <span id="pdp-price" class="pdp-price-value">0</span>
+              <span id="pdp-mrp" class="pdp-mrp-value">₹0</span>
+              <span id="pdp-discount" class="pdp-discount-pill">25% OFF</span>
+            </div>
+            <p class="pdp-tax-note">Inclusive of all taxes &bull; Free delivery on orders above ₹999</p>
+          </div>
+
+          <!-- Live Excel Sync Info Card -->
+          <div class="excel-live-info-box">
+            <div class="excel-info-header">
+              <span class="live-dot-green"></span>
+              <strong>Live Excel Inventory Synced</strong>
+            </div>
+            <div class="excel-info-body">
+              <span>Current Stock: <strong id="pdp-stock-count">0</strong> units</span>
+              <span class="info-sep">&bull;</span>
+              <span>Status: <strong id="pdp-status-text">In Stock</strong></span>
+            </div>
+            <div class="pdp-stock-bar">
+              <div id="pdp-stock-fill" class="pdp-stock-fill" style="width: 50%;"></div>
+            </div>
+          </div>
+
+          <!-- Quantity Selector -->
+          <div class="quantity-section" id="pdp-qty-section">
+            <label for="pdp-qty-input">Select Quantity:</label>
+            <div class="quantity-stepper">
+              <button id="qty-minus" class="qty-btn" aria-label="Decrease quantity">-</button>
+              <input type="number" id="pdp-qty-input" value="1" min="1" max="99" readonly>
+              <button id="qty-plus" class="qty-btn" aria-label="Increase quantity">+</button>
+            </div>
+            <span id="qty-max-note" class="qty-max-note">Max available: 45</span>
+          </div>
+
+          <!-- Purchase Action Buttons -->
+          <div class="pdp-actions">
+            <button id="pdp-add-cart-btn" class="btn-pdp-cart">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+              Add to Cart
+            </button>
+            <button id="pdp-buy-now-btn" class="btn-pdp-buy">
+              Buy Now
+            </button>
+          </div>
+
+          <!-- Description & Highlights -->
+          <div class="pdp-description-block">
+            <h3>Product Overview</h3>
+            <p id="pdp-description">Engineered for exceptional daily performance and premium reliability. Backed by full warranty and certified quality checks.</p>
+            <ul class="pdp-bullets">
+              <li>High-durability materials built for longevity and comfort</li>
+              <li>Official catalog item verified with <code>products_database.xlsx</code></li>
+              <li>Tested for quality assurance and performance standards</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         PAGE 3: FULL CART VIEW
+         ====================================================================== -->
+    <div id="page-cart" class="page-view hidden">
+      <div class="page-header">
+        <h1 class="page-title">Your Shopping Cart</h1>
+        <p class="page-sub">Review items before proceeding to checkout</p>
+      </div>
+
+      <div class="cart-layout" id="cart-content-wrapper">
+        <!-- Cart Items List -->
+        <div class="cart-items-column">
+          <div class="cart-items-card" id="cart-items-list"></div>
+          <div class="cart-extra-actions">
+            <a href="#catalog" class="btn-secondary">&larr; Continue Shopping</a>
+            <button id="clear-cart-btn" class="btn-outline-danger">Clear Cart</button>
+          </div>
+        </div>
+
+        <!-- Cart Summary Box -->
+        <div class="cart-summary-column">
+          <div class="order-summary-card">
+            <h2 class="summary-title">Order Summary</h2>
+
+            <div class="summary-row">
+              <span>Subtotal</span>
+              <span id="cart-subtotal">₹0</span>
+            </div>
+
+            <div class="summary-row">
+              <span>Shipping Fee</span>
+              <span id="cart-shipping" class="text-success">FREE</span>
+            </div>
+
+            <div class="summary-row">
+              <span>Estimated Taxes (18% GST)</span>
+              <span id="cart-tax">₹0</span>
+            </div>
+
+            <div class="summary-row discount-row hidden" id="discount-row">
+              <span>Promo Discount (EXCEL10)</span>
+              <span id="cart-discount" class="text-success">-₹0</span>
+            </div>
+
+            <!-- Coupon Input -->
+            <div class="coupon-box">
+              <input type="text" id="coupon-input" placeholder="Promo code (use: EXCEL10)" autocomplete="off">
+              <button id="apply-coupon-btn" class="btn-coupon">Apply</button>
+            </div>
+            <div id="coupon-message" class="coupon-msg"></div>
+
+            <div class="summary-divider"></div>
+
+            <div class="summary-total-row">
+              <span>Total Payable</span>
+              <span id="cart-grand-total" class="grand-total-price">₹0</span>
+            </div>
+
+            <button id="cart-proceed-checkout-btn" class="btn-checkout-primary">
+              Proceed to Checkout &rarr;
+            </button>
+
+            <div class="summary-secure-note">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              <span>100% Secure Checkout &bull; Live inventory reserved</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty Cart Message -->
+      <div id="cart-empty-view" class="empty-state hidden">
+        <div class="empty-icon">🛒</div>
+        <h3>Your shopping cart is empty</h3>
+        <p>You haven't added any products to your cart yet.</p>
+        <a href="#catalog" class="btn-primary">Browse Products Catalog</a>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         PAGE 4: CHECKOUT PAGE
+         ====================================================================== -->
+    <div id="page-checkout" class="page-view hidden">
+      <div class="page-header">
+        <h1 class="page-title">Checkout & Shipping</h1>
+        <p class="page-sub">Complete your details to place the order</p>
+      </div>
+
+      <div class="checkout-layout">
+        <!-- Form Column -->
+        <div class="checkout-form-column">
+          <form id="checkout-form" class="checkout-card" onsubmit="return false;">
+            <!-- Step 1: Contact Details -->
+            <div class="form-section">
+              <h2 class="form-section-title">
+                <span class="step-badge">1</span>
+                Contact & Delivery Information
+              </h2>
+              <div class="form-grid">
+                <div class="form-group full-width">
+                  <label for="cust-name">Full Name *</label>
+                  <input type="text" id="cust-name" required placeholder="Stephen Rodrick" value="Stephen Rodrick">
+                </div>
+                <div class="form-group">
+                  <label for="cust-email">Email Address *</label>
+                  <input type="email" id="cust-email" required placeholder="stephen@example.com" value="stephen@example.com">
+                </div>
+                <div class="form-group">
+                  <label for="cust-phone">Phone Number *</label>
+                  <input type="tel" id="cust-phone" required placeholder="+91 98765 43210" value="+91 98765 43210">
+                </div>
+                <div class="form-group full-width">
+                  <label for="cust-address">Street Address *</label>
+                  <input type="text" id="cust-address" required placeholder="Apartment, suite, unit, building, floor" value="42 Tech Park, MG Road">
+                </div>
+                <div class="form-group">
+                  <label for="cust-city">City *</label>
+                  <input type="text" id="cust-city" required placeholder="Bengaluru" value="Bengaluru">
+                </div>
+                <div class="form-group">
+                  <label for="cust-pincode">PIN / Postal Code *</label>
+                  <input type="text" id="cust-pincode" required placeholder="560001" value="560001">
+                </div>
+              </div>
+            </div>
+
+            <!-- Step 2: Payment Method -->
+            <div class="form-section">
+              <h2 class="form-section-title">
+                <span class="step-badge">2</span>
+                Payment Method
+              </h2>
+              <div class="payment-options">
+                <label class="payment-method-card active" id="method-card-razorpay">
+                  <input type="radio" name="payment-method" value="Razorpay" checked>
+                  <div class="method-info">
+                    <div class="method-title-row">
+                      <span class="razorpay-pill-logo">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="#0c2340"><path d="M22.4 0H1.6C0.7 0 0 0.7 0 1.6v20.8C0 23.3 0.7 24 1.6 24h20.8c0.9 0 1.6-0.7 1.6-1.6V1.6c0-0.9-0.7-1.6-1.6-1.6z" fill="#0C2340"/><path d="M12.6 17.6l-3.3 4.2H5.1l5.4-6.8-4.2-7.8h4.4l2.4 4.8 3.8-4.8h4.2l-5.6 7 4.7 7.6h-4.5l-2.9-4.2z" fill="#3395FF"/></svg>
+                        <strong>Razorpay Secure</strong>
+                      </span>
+                      <span class="method-tag tag-recommended">Recommended</span>
+                    </div>
+                    <span>UPI (Google Pay, PhonePe, Paytm), Cards, NetBanking & Wallets</span>
+                  </div>
+                </label>
+
+                <label class="payment-method-card" id="method-card-cod">
+                  <input type="radio" name="payment-method" value="Cash on Delivery (COD)">
+                  <div class="method-info">
+                    <strong>Cash on Delivery (COD)</strong>
+                    <span>Pay in cash upon physical doorstep delivery</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="form-actions">
+              <button type="submit" id="place-order-btn" class="btn-checkout-primary btn-large">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                Confirm & Place Order
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Checkout Mini Summary -->
+        <div class="checkout-summary-column">
+          <div class="order-summary-card">
+            <h2 class="summary-title">Order Items</h2>
+            <div id="checkout-items-preview" class="checkout-items-list"></div>
+
+            <div class="summary-divider"></div>
+
+            <div class="summary-row">
+              <span>Subtotal</span>
+              <span id="checkout-subtotal">₹0</span>
+            </div>
+            <div class="summary-row">
+              <span>Delivery</span>
+              <span class="text-success">FREE</span>
+            </div>
+            <div class="summary-row">
+              <span>Taxes (GST)</span>
+              <span id="checkout-tax">₹0</span>
+            </div>
+            <div class="summary-row discount-row hidden" id="checkout-discount-row">
+              <span>Discount</span>
+              <span id="checkout-discount" class="text-success">-₹0</span>
+            </div>
+
+            <div class="summary-divider"></div>
+
+            <div class="summary-total-row">
+              <span>Total Amount</span>
+              <span id="checkout-grand-total" class="grand-total-price">₹0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         PAGE 5: ORDER SUCCESS / CONFIRMATION
+         ====================================================================== -->
+    <div id="page-order-success" class="page-view hidden">
+      <div class="success-card">
+        <div class="success-icon-wrap">
+          <svg class="success-svg" viewBox="0 0 52 52">
+            <circle class="success-circle" cx="26" cy="26" r="25" fill="none"/>
+            <path class="success-check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+          </svg>
+        </div>
+
+        <h1 class="success-title">Order Placed Successfully!</h1>
+        <p class="success-sub">Thank you for your order. We have received your purchase and are preparing it for delivery.</p>
+
+        <div class="order-badge-row">
+          <span>Order ID: <strong id="success-order-id" class="code-pill">ORD-123456</strong></span>
+          <span>Estimated Delivery: <strong id="success-delivery-date">In 3 Days</strong></span>
+        </div>
+
+        <!-- Receipt Details Box -->
+        <div class="receipt-box">
+          <div class="receipt-header">
+            <h3>Purchase Receipt</h3>
+            <span id="success-timestamp">Today</span>
+          </div>
+
+          <div id="success-items-list" class="receipt-items"></div>
+
+          <div class="receipt-footer">
+            <div class="receipt-row">
+              <span>Payment Gateway</span>
+              <strong id="success-payment-method">Razorpay Secure</strong>
+            </div>
+            <div class="receipt-row" id="success-razorpay-id-row">
+              <span>Razorpay Payment ID</span>
+              <strong id="success-razorpay-id" class="code-pill">pay_DEMO123456</strong>
+            </div>
+            <div class="receipt-row">
+              <span>Payment Status</span>
+              <strong id="success-payment-status" class="text-success">Paid &amp; Captured (Verified)</strong>
+            </div>
+            <div class="receipt-row">
+              <span>Delivery To</span>
+              <strong id="success-customer-name">Customer Name</strong>
+            </div>
+            <div class="receipt-row total-highlight">
+              <span>Total Amount Paid</span>
+              <strong id="success-total-paid" class="text-success">₹0</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="success-actions">
+          <a href="#catalog" class="btn-primary">Continue Shopping</a>
+          <button onclick="window.print()" class="btn-secondary">Print Receipt</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================================
+         PAGE 6: EXCEL LIVE MONITOR / ADMIN DIAGNOSTICS
+         ====================================================================== -->
+    <div id="page-sync-status" class="page-view hidden">
+      <div class="page-header">
+        <h1 class="page-title">Excel Live Database Monitor</h1>
+        <p class="page-sub">Monitor real-time synchronization between <code>products_database.xlsx</code> and this web application.</p>
+      </div>
+
+      <div class="monitor-grid">
+        <!-- Diagnostic Status Cards -->
+        <div class="monitor-card">
+          <div class="monitor-card-header">
+            <span class="monitor-icon">📁</span>
+            <div>
+              <h3>Excel File Status</h3>
+              <p>products_database.xlsx</p>
+            </div>
+          </div>
+          <div class="monitor-metrics">
+            <div class="metric-row">
+              <span>File Path:</span>
+              <code>./products_database.xlsx</code>
+            </div>
+            <div class="metric-row">
+              <span>Sheet Name:</span>
+              <code>"Products"</code>
+            </div>
+            <div class="metric-row">
+              <span>Total Active Rows:</span>
+              <strong id="admin-row-count">12</strong>
+            </div>
+            <div class="metric-row">
+              <span>Last Modified On Disk:</span>
+              <strong id="admin-last-modified">--</strong>
+            </div>
+            <div class="metric-row">
+              <span>Polling Frequency:</span>
+              <strong>Every 5 Seconds (Continuous)</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Testing Playground / Instructions -->
+        <div class="monitor-card">
+          <div class="monitor-card-header">
+            <span class="monitor-icon">⚡</span>
+            <div>
+              <h3>Interactive Testing Guide</h3>
+              <p>How to test live synchronization</p>
+            </div>
+          </div>
+          <div class="monitor-instructions">
+            <div class="instruction-step">
+              <span class="step-dot">1</span>
+              <div>
+                <strong>Edit a Price in Excel:</strong>
+                <p>Open <code>products_database.xlsx</code>, find "Mechanical Keyboard" in the "Products" sheet, change its price to <code>1999</code>, and press <strong>Ctrl + S</strong>.</p>
+              </div>
+            </div>
+            <div class="instruction-step">
+              <span class="step-dot">2</span>
+              <div>
+                <strong>Watch the website update:</strong>
+                <p>Within 5 seconds, the website will flash a gold highlight on the updated price and display a live change alert!</p>
+              </div>
+            </div>
+            <div class="instruction-step">
+              <span class="step-dot">3</span>
+              <div>
+                <strong>Set Stock to 0:</strong>
+                <p>Set any product's stock to <code>0</code> and status to <code>Out of Stock</code>. The button will immediately disable and turn red.</p>
+              </div>
+            </div>
+          </div>
+          <div class="monitor-action-row">
+            <button id="admin-reset-db-btn" class="btn-secondary">Reset Database to Default (12 Products)</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ======================================================================
+       QUICK SLIDE-OUT CART DRAWER
+       ====================================================================== -->
+  <div id="cart-drawer-overlay" class="drawer-overlay hidden">
+    <aside class="cart-drawer" role="dialog" aria-modal="true" aria-label="Shopping Cart">
+      <div class="drawer-header">
+        <div class="drawer-title-wrap">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
+          <h2>Your Cart (<span id="drawer-items-count">0</span>)</h2>
+        </div>
+        <button id="close-drawer-btn" class="drawer-close" aria-label="Close Cart">&times;</button>
+      </div>
+
+      <div id="drawer-items-list" class="drawer-items"></div>
+
+      <div class="drawer-footer">
+        <div class="drawer-subtotal-row">
+          <span>Subtotal</span>
+          <span id="drawer-subtotal">₹0</span>
+        </div>
+        <p class="drawer-tax-note">Shipping & taxes calculated at checkout</p>
+        <div class="drawer-buttons">
+          <a href="#cart" class="btn-secondary" id="drawer-view-cart-btn">View Full Cart</a>
+          <a href="#checkout" class="btn-primary" id="drawer-checkout-btn">Checkout Now &rarr;</a>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- How-To Modal -->
+  <div id="guide-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <span class="modal-icon">📊</span>
+          <div>
+            <h2>How to Edit & Test the Excel Database</h2>
+            <p>Single source of truth: <code>products_database.xlsx</code></p>
+          </div>
+        </div>
+        <button id="close-guide-btn" class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="guide-step">
+          <div class="step-num">1</div>
+          <div class="step-text">
+            <strong>Open the Excel file:</strong>
+            <p>Locate <code>products_database.xlsx</code> in the project folder and open it in Microsoft Excel, LibreOffice, or VS Code.</p>
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="step-num">2</div>
+          <div class="step-text">
+            <strong>Switch to the "Products" sheet:</strong>
+            <p>Row 1 contains the headers (<code>ID, Name, Category, Price (INR), Stock, Rating, Status</code>). Never rename them.</p>
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="step-num">3</div>
+          <div class="step-text">
+            <strong>Edit any cell & press Save (Ctrl + S):</strong>
+            <p>Edit the price, stock, or status of any product, or add a new row at the bottom with a unique ID.</p>
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="step-num">4</div>
+          <div class="step-text">
+            <strong>Watch the website update automatically:</strong>
+            <p>Every 5 seconds the server re-reads the spreadsheet and pushes updates with glowing highlight animations!</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="got-it-btn" class="btn-primary">Got it, let's explore!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="footer-container">
+      <p>&copy; 2026 NexusStore &bull; Live Excel-Driven Architecture &bull; Node.js, Express, SheetJS, Vanilla JS</p>
+      <div class="footer-links">
+        <a href="#catalog">Shop</a>
+        <a href="#sync-status">Live Monitor</a>
+        <a href="#cart">Cart</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ======================================================================
+       RAZORPAY CHECKOUT MODAL (AUTHENTIC DEMO)
+       ====================================================================== -->
+  <div id="razorpay-modal" class="razorpay-overlay hidden" role="dialog" aria-modal="true" aria-label="Razorpay Checkout">
+    <div class="razorpay-box">
+      <!-- Modal Top Bar -->
+      <div class="rzp-header">
+        <div class="rzp-brand-wrap">
+          <div class="rzp-logo-badge">
+            <svg width="22" height="22" viewBox="0 0 24 24"><path d="M22.4 0H1.6C0.7 0 0 0.7 0 1.6v20.8C0 23.3 0.7 24 1.6 24h20.8c0.9 0 1.6-0.7 1.6-1.6V1.6c0-0.9-0.7-1.6-1.6-1.6z" fill="#0C2340"/><path d="M12.6 17.6l-3.3 4.2H5.1l5.4-6.8-4.2-7.8h4.4l2.4 4.8 3.8-4.8h4.2l-5.6 7 4.7 7.6h-4.5l-2.9-4.2z" fill="#3395FF"/></svg>
+          </div>
+          <div>
+            <div class="rzp-merchant-title">NexusStore</div>
+            <div class="rzp-merchant-sub">Order ID: <span id="rzp-order-preview-id">ORD-TEMP</span></div>
+          </div>
+        </div>
+
+        <div class="rzp-amount-badge">
+          <span class="rzp-amount-label">Amount Payable</span>
+          <span class="rzp-amount-val" id="rzp-amount-display">₹0</span>
+        </div>
+
+        <button id="rzp-close-btn" class="rzp-close-btn" aria-label="Cancel Razorpay Payment">&times;</button>
+      </div>
+
+      <!-- Test Mode Notice Bar -->
+      <div class="rzp-test-banner">
+        <span class="rzp-badge-test">TEST MODE</span>
+        <span>Razorpay Sandbox Environment &bull; No real money will be charged</span>
+      </div>
+
+      <!-- Modal Body (Two-Column Layout) -->
+      <div class="rzp-body" id="rzp-body-main">
+        <!-- Left Sidebar: Payment Methods -->
+        <div class="rzp-sidebar">
+          <button class="rzp-tab active" data-tab="upi">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+            <div>
+              <strong>UPI &amp; QR Code</strong>
+              <small>GPay, PhonePe, Paytm</small>
+            </div>
+          </button>
+
+          <button class="rzp-tab" data-tab="cards">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+            <div>
+              <strong>Card</strong>
+              <small>Visa, MasterCard, RuPay</small>
+            </div>
+          </button>
+
+          <button class="rzp-tab" data-tab="netbanking">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="21" x2="21" y2="21"></line><line x1="3" y1="10" x2="21" y2="10"></line><polyline points="5 6 12 3 19 6"></polyline><line x1="4" y1="10" x2="4" y2="21"></line><line x1="20" y1="10" x2="20" y2="21"></line></svg>
+            <div>
+              <strong>Netbanking</strong>
+              <small>All Indian Banks</small>
+            </div>
+          </button>
+
+          <button class="rzp-tab" data-tab="wallets">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"></rect><circle cx="16" cy="12" r="2"></circle></svg>
+            <div>
+              <strong>Wallets</strong>
+              <small>Paytm, PhonePe, Mobikwik</small>
+            </div>
+          </button>
+        </div>
+
+        <!-- Right Content: Payment Form -->
+        <div class="rzp-content">
+          <!-- TAB 1: UPI & QR -->
+          <div class="rzp-tab-panel active" id="rzp-panel-upi">
+            <div class="rzp-qr-wrap">
+              <div class="rzp-qr-frame">
+                <!-- SVG simulated QR Code with corner targets -->
+                <svg width="160" height="160" viewBox="0 0 160 160" fill="none" class="rzp-qr-svg">
+                  <rect width="160" height="160" fill="#ffffff" rx="8"/>
+                  <!-- Corner Targets -->
+                  <rect x="15" y="15" width="38" height="38" rx="4" fill="#0C2340"/>
+                  <rect x="21" y="21" width="26" height="26" rx="2" fill="#ffffff"/>
+                  <rect x="26" y="26" width="16" height="16" rx="2" fill="#0C2340"/>
+
+                  <rect x="107" y="15" width="38" height="38" rx="4" fill="#0C2340"/>
+                  <rect x="113" y="21" width="26" height="26" rx="2" fill="#ffffff"/>
+                  <rect x="118" y="26" width="16" height="16" rx="2" fill="#0C2340"/>
+
+                  <rect x="15" y="107" width="38" height="38" rx="4" fill="#0C2340"/>
+                  <rect x="21" y="113" width="26" height="26" rx="2" fill="#ffffff"/>
+                  <rect x="26" y="118" width="16" height="16" rx="2" fill="#0C2340"/>
+
+                  <!-- Data Matrix Dots -->
+                  <circle cx="68" cy="24" r="4" fill="#0C2340"/>
+                  <circle cx="80" cy="24" r="4" fill="#0C2340"/>
+                  <circle cx="92" cy="24" r="4" fill="#0C2340"/>
+                  <circle cx="68" cy="40" r="4" fill="#3395FF"/>
+                  <circle cx="84" cy="40" r="4" fill="#0C2340"/>
+                  <circle cx="68" cy="56" r="4" fill="#0C2340"/>
+                  <circle cx="80" cy="56" r="4" fill="#3395FF"/>
+                  <circle cx="92" cy="56" r="4" fill="#0C2340"/>
+                  
+                  <rect x="65" y="70" width="30" height="30" rx="4" fill="#3395FF"/>
+                  <path d="M78 80l-2 3h-2l3-4-2-4h2l1 2 2-2h2l-3 4 2 3h-2l-1-2z" fill="#ffffff"/>
+
+                  <circle cx="30" cy="74" r="4" fill="#0C2340"/>
+                  <circle cx="46" cy="74" r="4" fill="#0C2340"/>
+                  <circle cx="30" cy="90" r="4" fill="#0C2340"/>
+                  <circle cx="46" cy="90" r="4" fill="#3395FF"/>
+
+                  <circle cx="118" cy="74" r="4" fill="#0C2340"/>
+                  <circle cx="134" cy="74" r="4" fill="#0C2340"/>
+                  <circle cx="118" cy="90" r="4" fill="#3395FF"/>
+                  <circle cx="134" cy="90" r="4" fill="#0C2340"/>
+
+                  <circle cx="68" cy="118" r="4" fill="#0C2340"/>
+                  <circle cx="80" cy="118" r="4" fill="#3395FF"/>
+                  <circle cx="92" cy="118" r="4" fill="#0C2340"/>
+                  <circle cx="68" cy="134" r="4" fill="#0C2340"/>
+                  <circle cx="80" cy="134" r="4" fill="#0C2340"/>
+                  <circle cx="92" cy="134" r="4" fill="#0C2340"/>
+                </svg>
+                <div class="rzp-qr-scanner-line"></div>
+              </div>
+              <div class="rzp-qr-info">
+                <strong>Scan and pay with any UPI app</strong>
+                <p>Google Pay, PhonePe, Paytm, CRED, BHIM</p>
+                <div class="rzp-qr-timer">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                  <span>QR code valid for <strong id="rzp-qr-timer-text">04:59</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="rzp-divider-text"><span>OR ENTER UPI ID</span></div>
+
+            <div class="rzp-upi-id-box">
+              <input type="text" id="rzp-upi-id-input" placeholder="e.g. mobileNumber@upi or user@okhdfcbank" value="stephen.rodrick@okhdfcbank">
+              <button id="rzp-upi-verify-pay-btn" class="rzp-btn-action">Verify &amp; Pay</button>
+            </div>
+          </div>
+
+          <!-- TAB 2: CARDS -->
+          <div class="rzp-tab-panel" id="rzp-panel-cards">
+            <div class="rzp-form-group">
+              <label>Card Number</label>
+              <div class="rzp-card-input-wrap">
+                <input type="text" id="rzp-card-number" placeholder="4532 0123 4567 8920" maxlength="19" value="4532 8920 1234 5678">
+                <span class="rzp-card-badge">VISA</span>
+              </div>
+            </div>
+
+            <div class="rzp-form-row">
+              <div class="rzp-form-group">
+                <label>Expiry (MM/YY)</label>
+                <input type="text" id="rzp-card-expiry" placeholder="12/28" maxlength="5" value="12/28">
+              </div>
+              <div class="rzp-form-group">
+                <label>CVV / CVC</label>
+                <input type="password" id="rzp-card-cvv" placeholder="•••" maxlength="4" value="789">
+              </div>
+            </div>
+
+            <div class="rzp-form-group">
+              <label>Cardholder Name</label>
+              <input type="text" id="rzp-card-name" placeholder="Name on card" value="Stephen Rodrick">
+            </div>
+
+            <button id="rzp-card-pay-btn" class="rzp-btn-action rzp-btn-full">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+              Pay <span class="rzp-btn-amount">₹0</span> Securely
+            </button>
+          </div>
+
+          <!-- TAB 3: NETBANKING -->
+          <div class="rzp-tab-panel" id="rzp-panel-netbanking">
+            <p class="rzp-panel-desc">Select your bank to proceed with NetBanking:</p>
+            <div class="rzp-banks-grid">
+              <button class="rzp-bank-card active" data-bank="HDFC Bank">
+                <strong>HDFC</strong>
+                <span>HDFC Bank</span>
+              </button>
+              <button class="rzp-bank-card" data-bank="State Bank of India">
+                <strong>SBI</strong>
+                <span>State Bank</span>
+              </button>
+              <button class="rzp-bank-card" data-bank="ICICI Bank">
+                <strong>ICICI</strong>
+                <span>ICICI Bank</span>
+              </button>
+              <button class="rzp-bank-card" data-bank="Axis Bank">
+                <strong>AXIS</strong>
+                <span>Axis Bank</span>
+              </button>
+              <button class="rzp-bank-card" data-bank="Kotak Mahindra">
+                <strong>KOTAK</strong>
+                <span>Kotak Bank</span>
+              </button>
+              <button class="rzp-bank-card" data-bank="Punjab National Bank">
+                <strong>PNB</strong>
+                <span>PNB Bank</span>
+              </button>
+            </div>
+            <button id="rzp-netbanking-pay-btn" class="rzp-btn-action rzp-btn-full" style="margin-top: 1rem;">
+              Proceed via NetBanking &rarr;
+            </button>
+          </div>
+
+          <!-- TAB 4: WALLETS -->
+          <div class="rzp-tab-panel" id="rzp-panel-wallets">
+            <p class="rzp-panel-desc">Choose a wallet to pay:</p>
+            <div class="rzp-wallets-list">
+              <label class="rzp-wallet-item active">
+                <input type="radio" name="rzp-wallet" value="PhonePe" checked>
+                <strong>PhonePe Wallet</strong>
+              </label>
+              <label class="rzp-wallet-item">
+                <input type="radio" name="rzp-wallet" value="Paytm">
+                <strong>Paytm Wallet</strong>
+              </label>
+              <label class="rzp-wallet-item">
+                <input type="radio" name="rzp-wallet" value="Mobikwik">
+                <strong>Mobikwik</strong>
+              </label>
+            </div>
+            <button id="rzp-wallet-pay-btn" class="rzp-btn-action rzp-btn-full" style="margin-top: 1rem;">
+              Pay with Wallet &rarr;
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Processing State Overlay -->
+      <div id="rzp-processing-overlay" class="rzp-processing-view hidden">
+        <div class="rzp-spinner"></div>
+        <h3>Authorizing with Bank...</h3>
+        <p>Please do not refresh or press the back button.</p>
+        <span class="rzp-secure-watermark">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+          Razorpay 256-bit Bank Grade Security
+        </span>
+      </div>
+
+      <!-- Sandbox Quick Test Simulation Footer -->
+      <div class="rzp-footer">
+        <div class="rzp-sandbox-controls">
+          <span class="rzp-test-label">🧪 Razorpay Sandbox Action:</span>
+          <button id="rzp-simulate-success-btn" class="rzp-btn-test success" title="Simulate bank authorization success">
+            ✅ Simulate Success (Instant Pay)
+          </button>
+          <button id="rzp-simulate-failure-btn" class="rzp-btn-test failure" title="Simulate bank decline">
+            ❌ Simulate Bank Decline
+          </button>
+        </div>
+        <div class="rzp-footer-security">
+          <span>Secured by</span>
+          <span class="rzp-secure-logo">Razorpay</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
