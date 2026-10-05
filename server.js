@@ -98,27 +98,26 @@ function readExcelFile(maxRetries = 2, delayMs = 120) {
         isCached: false
       };
     } catch (err) {
-      // If file is locked (common on Windows when saving in Excel)
-      const isLockError = err.code === 'EBUSY' || err.code === 'EPERM' || err.code === 'EACCES';
+      // If file is locked or in middle of atomic save (common on Windows when saving in Excel)
       attempts++;
 
-      if (isLockError && attempts <= maxRetries) {
+      if (attempts <= maxRetries) {
         // Synchronous sleep before retry
         const start = Date.now();
         while (Date.now() - start < delayMs) {
-          // busy wait short interval
+          // brief wait
         }
         continue;
       }
 
-      // If still failing but we have cached data, return cached snapshot with warning
-      if (isLockError && cachedData) {
-        console.warn(`[WARN] Excel file temporarily locked. Serving latest cached snapshot (${cachedData.length} items).`);
+      // If still failing after retries but we have cached data, return cached snapshot with warning
+      if (cachedData) {
+        console.warn(`[WARN] Excel read issue (${err.message}). Serving latest cached snapshot (${cachedData.length} items).`);
         return {
           products: cachedData,
           lastModified: lastModifiedTime,
           isCached: true,
-          warning: 'File locked by Excel. Displaying latest cached snapshot.'
+          warning: 'File is currently being written or locked by Excel. Displaying latest cached snapshot.'
         };
       }
 
@@ -337,6 +336,15 @@ app.use((req, res, next) => {
     return res.sendFile(path.join(__dirname, 'public', 'index.html'));
   }
   next();
+});
+
+// Process-level crash prevention guards
+process.on('uncaughtException', (err) => {
+  console.error('[UNCAUGHT EXCEPTION PREVENTED]:', err.message);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('[UNHANDLED REJECTION PREVENTED]:', reason);
 });
 
 // Start Server
