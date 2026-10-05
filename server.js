@@ -302,6 +302,34 @@ app.post('/api/reset-database', (req, res) => {
     res.status(500).json({ error: 'Failed to reset database: ' + err.message });
   }
 });
+/**
+ * GET /api/meta
+ * Diagnostics endpoint returning database & server status
+ */
+app.get('/api/meta', (req, res) => {
+  try {
+    const exists = fs.existsSync(EXCEL_FILE_PATH);
+    let stat = null;
+    let count = 0;
+    if (exists) {
+      stat = fs.statSync(EXCEL_FILE_PATH);
+      const data = readExcelFile();
+      count = data.products.length;
+    }
+
+    res.json({
+      status: 'online',
+      excelFile: path.basename(EXCEL_FILE_PATH),
+      exists,
+      rowCount: count,
+      fileSizeBytes: stat ? stat.size : 0,
+      lastModified: stat ? stat.mtime : null,
+      serverTime: new Date()
+    });
+  } catch (err) {
+    res.status(500).json({ status: 'error', message: err.message });
+  }
+});
 
 // Fallback to index.html for root or client routes
 app.use((req, res, next) => {
